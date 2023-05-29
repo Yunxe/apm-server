@@ -10,7 +10,8 @@ run: build
 	 ${OUTPUT_DIR}/main -c ./configs/apm-server.yaml
 
 .PHONY: tidy
-tidy: go mod tidy
+tidy:
+	go mod tidy
 
 
 

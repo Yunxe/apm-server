@@ -27,13 +27,7 @@ var Logger *zap.SugaredLogger
 func NewApmServerCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "APM-server",
-		Short: "A brief description of your application",
-		Long: `A longer description that spans multiple lines and likely contains
-		examples and usage of using your application. For example:
-		
-		Cobra is a CLI library for Go that empowers applications.
-		This application is a tool to generate the needed files
-		to quickly create a Cobra application.`,
+		Short: "A little monitor server for Specialize Design",
 		//SilenceUsage: true,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -58,7 +52,7 @@ func NewApmServerCommand() *cobra.Command {
 	// 在这里您将定义标志和配置设置。
 
 	// Cobra 支持持久性标志(PersistentFlag)，该标志可用于它所分配的命令以及该命令下的每个子命令
-	cmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "The path to the miniblog configuration file. Empty string for no configuration file.")
+	cmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "The path to the apm-server configuration file. Empty string for no configuration file.")
 
 	// Cobra 也支持本地标志，本地标志只能在其所绑定的命令上使用
 	cmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
