@@ -2,6 +2,7 @@ package apm_server
 
 import (
 	"APM-server/internal/apm-server/controller/v1/user"
+	"APM-server/internal/apm-server/controller/v2/apm"
 	"APM-server/internal/apm-server/store"
 	"APM-server/internal/pkg/core"
 	"APM-server/internal/pkg/errno"
@@ -37,6 +38,7 @@ func installRouters(g *gin.Engine) error {
 
 	//创建 v1 路由分组
 	v1 := g.Group("/v1")
+	v2 := g.Group("/v2")
 	{
 		// 创建 users 路由分组
 		userv1 := v1.Group("/users")
@@ -48,7 +50,10 @@ func installRouters(g *gin.Engine) error {
 			//userv1.GET("", uc.List)           // 列出用户列表，只有 root 用户才能访问
 			//userv1.DELETE(":name", uc.Delete) // 删除用户
 		}
-
+		apmv2 := v2.Group("/apm")
+		{
+			apmv2.GET(":addr", apm.WebsocketHandler)
+		}
 	}
 
 	return nil

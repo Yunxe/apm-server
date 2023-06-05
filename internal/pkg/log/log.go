@@ -86,7 +86,7 @@ func NewLogger(opts *Options) *zapLogger {
 		// 指定日志级别
 		Level: zap.NewAtomicLevelAt(zapLevel),
 		// 指定日志显示格式，可选值：console, json
-		Encoding:      opts.Format,
+		Encoding:      "console",
 		EncoderConfig: encoderConfig,
 		// 指定日志输出位置
 		OutputPaths: opts.OutputPaths,

@@ -5,12 +5,11 @@ import (
 	"APM-server/internal/pkg/log"
 	"APM-server/internal/pkg/model"
 	"APM-server/pkg/db"
+	"APM-server/pkg/kafka"
 	"fmt"
+	"github.com/spf13/viper"
 	"os"
 	"strings"
-
-	"github.com/joho/godotenv"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -48,9 +47,9 @@ func initConfig() {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
 
-	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalw("Error loading .env file")
-	}
+	//if err := godotenv.Load(".env"); err != nil {
+	//	log.Fatalw("Error loading .env file")
+	//}
 }
 
 // logOptions 从 viper 中读取日志配置，构建 `*log.Options` 并返回.
@@ -68,9 +67,9 @@ func logOptions() *log.Options {
 func initStore() error {
 	dbOptions := &db.MySQLOptions{
 		Host:                  viper.GetString("db.host"),
-		Username:              os.Getenv("Username"),
-		Password:              os.Getenv("Password"),
-		Database:              os.Getenv("Database"),
+		Username:              viper.GetString("db.username"),
+		Password:              viper.GetString("db.password"),
+		Database:              viper.GetString("db.database"),
 		MaxIdleConnections:    viper.GetInt("db.max-idle-connections"),
 		MaxOpenConnections:    viper.GetInt("db.max-open-connections"),
 		MaxConnectionLifeTime: viper.GetDuration("db.max-connection-life-time"),
@@ -87,6 +86,22 @@ func initStore() error {
 	}
 
 	_ = store.NewStore(ins)
+
+	return nil
+}
+
+func initConsumerGroup() error {
+	cgOptions := &kafka.KafkaOptions{
+		ConsumerReturnErr: viper.GetBool("kafka.consumer-return-err"),
+		GroupID:           viper.GetString("kafka.group-id"),
+		Brokers:           viper.GetStringSlice("kafka.brokers"),
+	}
+
+	client, err := kafka.NewKafkaClient(cgOptions)
+	if err != nil {
+		return err
+	}
+	kafka.StoreClient(client)
 
 	return nil
 }

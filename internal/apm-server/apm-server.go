@@ -4,6 +4,7 @@ import (
 	"APM-server/internal/pkg/known"
 	"APM-server/internal/pkg/log"
 	"APM-server/internal/pkg/middleware"
+	"APM-server/pkg/kafka"
 	"APM-server/pkg/token"
 	"context"
 	"errors"
@@ -26,7 +27,7 @@ var Logger *zap.SugaredLogger
 
 func NewApmServerCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "APM-server",
+		Use:   "apm-server",
 		Short: "A little monitor server for Specialize Design",
 		//SilenceUsage: true,
 
@@ -57,17 +58,45 @@ func NewApmServerCommand() *cobra.Command {
 	// Cobra 也支持本地标志，本地标志只能在其所绑定的命令上使用
 	cmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
+	var initTopicFlag bool
+	initTopicCmd := &cobra.Command{
+		Use:   "init-topic",
+		Short: "init topics and partitions",
+		Run: func(cmd *cobra.Command, args []string) {
+			if initTopicFlag{
+				err:=initConsumerGroup()
+				if err != nil {
+					log.Errorw("init cg err","err",err)
+				}
+				kafka.InitTopics()
+				kafka.KS().Client().Close()
+			}
+		},
+	}
+	initTopicCmd.Flags().BoolVarP(&initTopicFlag,"topic","t",false,"true to init topics and partitions")
+	cmd.AddCommand(initTopicCmd)
+
 	return cmd
 }
 
 func run() error {
+	//var wg sync.WaitGroup
+
 	// 初始化 store 层
 	if err := initStore(); err != nil {
 		return err
 	}
 
+
+	//初始化kafka消费组
+	err:=initConsumerGroup();
+	if err != nil {
+		log.Errorw("init cg err","err",err)
+	}
+	defer kafka.KS().Client().Close()
+
 	// 设置 token 包的签发密钥，用于 token 包 token 的签发和解析
-	token.Init(os.Getenv("jwtSecret"), known.XEmailKey)
+	token.Init(viper.GetString("jwtSecret"), known.XEmailKey)
 
 	gin.SetMode(viper.GetString("runmode"))
 
@@ -81,9 +110,9 @@ func run() error {
 		return err
 	}
 
-	httpsrv := &http.Server{Addr: viper.GetString("addr"), Handler: g}
+	httpsrv := &http.Server{Addr: viper.GetString("port"), Handler: g}
 	log.Infow("logger is running", "level:", viper.GetString("log.level"))
-	log.Infow("start to listening the incoming requests on http address", "address:", viper.GetString("addr"))
+	log.Infow("start to listening the incoming requests on http address", "address:", viper.GetString("port"))
 	go func() {
 		if err := httpsrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalw(err.Error())
